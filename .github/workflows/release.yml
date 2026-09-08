@@ -1,0 +1,57 @@
+name: Release
+
+# Tag-driven macOS release train for Portero: every push to develop/staging/
+# main computes whether a release is due for that channel, then delegates the
+# build, package, tag, GitHub Release, and (stable only) Homebrew Cask
+# publication to the shared reusable workflow in sisques-labs/workflows. See
+# openspec/changes/homebrew-release-train/design.md for the full data flow.
+#
+# NOTE: sisques-labs/workflows/.github/workflows/macos-cask-release.yml@main
+# will 404 until that repo's feature/macos-cask-release-workflow branch
+# (commit d5d0073) is pushed and merged to workflows@main. That's an
+# expected, pending cross-repo dependency — not a bug in this change.
+
+on:
+  push:
+    branches: [develop, staging, main]
+
+# Serialize releases per branch so two pushes to the same channel never race
+# on tag creation.
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  detect:
+    name: Detect release
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.detect.outputs.should_release }}
+      release_type: ${{ steps.detect.outputs.release_type }}
+      next_version: ${{ steps.detect.outputs.next_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Detect release train state
+        id: detect
+        uses: sisques-labs/workflows/.github/actions/release-train-detect@main
+        with:
+          branch: ${{ github.ref_name }}
+
+  release:
+    name: Build, release & publish Cask
+    needs: detect
+    if: needs.detect.outputs.should_release == 'true'
+    uses: sisques-labs/workflows/.github/workflows/macos-cask-release.yml@main
+    secrets: inherit
+    with:
+      app_name: Portero
+      release_type: ${{ needs.detect.outputs.release_type }}
+      next_version: ${{ needs.detect.outputs.next_version }}
+      sync_branches_after_stable: develop,staging
