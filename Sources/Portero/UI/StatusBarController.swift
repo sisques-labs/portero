@@ -100,12 +100,32 @@ final class StatusBarController: NSObject {
 
     @objc private func terminate(_ sender: NSMenuItem) {
         guard let pid = sender.representedObject as? Int32 else { return }
-        ProcessKiller.terminate(pid: pid)
+        let result = ProcessKiller.terminate(pid: pid)
+        switch result {
+        case .success:
+            showAlert(title: "Success", message: "Process terminated")
+        case .failure(let error):
+            showAlert(title: "Failed to Terminate", message: error.description)
+        }
     }
 
     @objc private func forceKill(_ sender: NSMenuItem) {
         guard let pid = sender.representedObject as? Int32 else { return }
-        ProcessKiller.forceKill(pid: pid)
+        let result = ProcessKiller.forceKill(pid: pid)
+        switch result {
+        case .success:
+            showAlert(title: "Success", message: "Process killed")
+        case .failure(let error):
+            showAlert(title: "Failed to Kill", message: error.description)
+        }
+    }
+
+    private func showAlert(title: String, message: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 
     @objc private func quit() {
