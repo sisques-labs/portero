@@ -9,9 +9,9 @@
     <key>CFBundleIdentifier</key>
     <string>com.sisqueslabs.portero</string>
     <key>CFBundleVersion</key>
-    <string>1.0</string>
+    <string>0.0.0</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>0.0.0</string>
     <key>CFBundleExecutable</key>
     <string>Portero</string>
     <key>CFBundlePackageType</key>
