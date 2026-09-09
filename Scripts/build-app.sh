@@ -24,6 +24,12 @@ cp Resources/Info.plist "$APP_BUNDLE/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${VERSION}" "$APP_BUNDLE/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${VERSION}" "$APP_BUNDLE/Contents/Info.plist"
 
+# The icon must land in the bundle before codesign — mutating Contents/ after
+# signing invalidates the signature (same constraint as the version stamp above;
+# see homebrew-release-train design.md, decision 3).
+mkdir -p "$APP_BUNDLE/Contents/Resources"
+cp Resources/AppIcon.icns "$APP_BUNDLE/Contents/Resources/AppIcon.icns"
+
 codesign --force --deep --sign - "$APP_BUNDLE"
 
 # ditto preserves the code signature; a plain zip does not (see design.md).
